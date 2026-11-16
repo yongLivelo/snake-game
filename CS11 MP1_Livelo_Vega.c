@@ -6,10 +6,9 @@
 #include <stdio.h>
 #define AREA 15
 #define FOOD 5
-int snakeLength = 1;
 bool playing = false;
 bool inMenu = true;
-void Menu();
+int snakeLength = 1;
 enum DIFFICULTY { EASY, DIFFICULT };
 enum DIFFICULTY difficulty;
 struct Point {
@@ -34,9 +33,15 @@ void PrintBoard() {
   }
 }
 
-void PrintSnake() {}
+void PrintSnake() {
+  // TODO
+}
 
-void PrintBlockAndFood() {}
+void PrintBlockAndFood() {
+  // TODO
+}
+
+void Menu();
 
 void StartGame() {
   while (playing) {
@@ -48,6 +53,10 @@ void StartGame() {
     char input;
     scanf("%c", &input);
     switch (input) {
+    case 'q':
+    case 'Q':
+      playing = false;
+      break;
     case 'w':
     case 'W':
       break;
@@ -64,9 +73,24 @@ void StartGame() {
       break;
     }
   }
+  inMenu = true;
+  do {
 
-  printf("Game over! Do you want to play again?\n(1) Yes\n(2) Exit\n");
-  Menu();
+    printf("Game over! Do you want to play again?\n(1) Yes\n(2) Exit\n");
+    int input;
+    scanf("%d", &input);
+    switch (input) {
+    case 1:
+      Menu();
+      inMenu = false;
+      break;
+    case 2:
+      inMenu = false;
+      break;
+    default:
+      break;
+    }
+  } while (inMenu);
 }
 
 void Menu() {
