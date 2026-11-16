@@ -78,6 +78,12 @@ void PrintBoard() {
     case RIGHT:
       PrintAt(5, 5, 'R');
       break;
+    case UP:
+      PrintAt(5, 5, 'U');
+      break;
+    case DOWN:
+      PrintAt(5, 5, 'D');
+      break;
     default:
       break;
     }
@@ -96,6 +102,10 @@ void Menu();
 
 void StartGame() {
   while (playing) {
+    // Sourcce -
+    // https://stackoverflow.com/questions/30126490/how-to-hide-console-cursor-in-c
+    printf("\e[?25l");
+
     clear();
     PrintBoard();
     char key;
@@ -107,6 +117,12 @@ void StartGame() {
     case 'd':
       snakeDirection = RIGHT;
       break;
+    case 'w':
+      snakeDirection = UP;
+      break;
+    case 's':
+      snakeDirection = DOWN;
+      break;
     default:
       break;
     }
@@ -116,6 +132,7 @@ void StartGame() {
     usleep(100000);
   }
   inMenu = true;
+  printf("\e[?25h");
   do {
     printf("Game over! Do you want to play again?\n(1) Yes\n(2) Exit\n");
     int input;
@@ -123,7 +140,6 @@ void StartGame() {
     switch (input) {
     case 1:
       Menu();
-      inMenu = false;
       break;
     case 2:
       inMenu = false;
@@ -147,10 +163,10 @@ void Menu() {
       scanf("%d", &input);
       switch (input) {
       case 1:
-        difficulty = DIFFICULT;
+        difficulty = EASY;
         break;
       case 2:
-        difficulty = EASY;
+        difficulty = DIFFICULT;
         break;
       }
       inMenu = false;
