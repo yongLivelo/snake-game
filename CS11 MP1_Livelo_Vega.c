@@ -1,73 +1,112 @@
-/* Compile using gcc "CS11 MP1_Livelo_Vega.c" -lncurses && ./a.out
- */
-#include <curses.h>
-#include <ncurses.h>
-#include <unistd.h>
+// Source - https://stackoverflow.com/a/17271636
+// Posted by David Ranieri
+// Retrieved 2026-11-16, License - CC BY-SA 3.0
+#define clear() printf("\033[H\033[J")
+#include <stdbool.h>
+#include <stdio.h>
+#define AREA 15
+#define FOOD 5
+int snakeLength = 1;
+bool playing = false;
+bool inMenu = true;
+void Menu();
+enum DIFFICULTY { EASY, DIFFICULT };
+enum DIFFICULTY difficulty;
+struct Point {
+  int x;
+  int y;
+};
 
-int playerCoordinates[2] = {5, 5}; // {x, y}
-void renderBoard() {
-  for (int i = 0; i < 15; i++) {
-    mvprintw(0, 2 * i, "#");
-    mvprintw(i, 0, "#");
-    mvprintw(15, 2 * i, "#");
-    mvprintw(i, 1 * 2, "#");
+void PrintAt(int x, int y, char c) {
+  // Source - https://stackoverflow.com/a/72073868
+  // Posted by AMZG studio's, modified by community. See post 'Timeline' for
+  // change history Retrieved 2026-11-16, License - CC BY-SA 4.0
+  // Noted in comments that the STDOUT starts at index 1
+  printf("\033[%d;%dH%c", y + 1, (x * 2) + 1, c);
+}
+
+void PrintBoard() {
+  for (int i = 0; i <= AREA; i++) {
+    PrintAt(0, i, '#');
+    PrintAt(AREA, i, '#');
+    PrintAt(i, 0, '#');
+    PrintAt(i, AREA, '#');
   }
 }
-void renderPlayer() {
-  // ncurses uses (y, x) order
-  mvprintw(playerCoordinates[1], playerCoordinates[0], "@");
-}
 
-int main(void) {
-  int direction[2] = {1, 0};
+void PrintSnake() {}
 
-  initscr();
-  noecho();
-  curs_set(0);
-  nodelay(stdscr, TRUE);
-  while (1) {
-    int c = getch();
+void PrintBlockAndFood() {}
 
-    if (c != ERR) {
-      if (c == 'w' || c == 'W') {
-        direction[0] = 0;
-        direction[1] = -1; // Up decreases Y
-      } else if (c == 's' || c == 'S') {
-        direction[0] = 0;
-        direction[1] = 1; // Down increases Y
-      } else if (c == 'a' || c == 'A') {
-        direction[0] = -1;
-        direction[1] = 0;
-      } else if (c == 'd' || c == 'D') {
-        direction[0] = 1;
-        direction[1] = 0;
-      } else if (c == 'q' || c == 'Q') {
-        break; // Quit cleanly
-      }
-    }
-
-    // Update position
-    playerCoordinates[0] += direction[0];
-    playerCoordinates[1] += direction[1];
-
-    // Keep within terminal bounds (LINES and COLS are built-in ncurses globals)
-    if (playerCoordinates[0] < 0)
-      playerCoordinates[0] = 0;
-    if (playerCoordinates[0] >= COLS)
-      playerCoordinates[0] = COLS - 1;
-    if (playerCoordinates[1] < 1)
-      playerCoordinates[1] = 1; // Row 0 is for instructions
-    if (playerCoordinates[1] >= LINES)
-      playerCoordinates[1] = LINES - 1;
-
+void StartGame() {
+  while (playing) {
     clear();
-    renderBoard();
-    renderPlayer();
-    refresh();
-
-    usleep(100000); // 100ms (10 frames per second)
+    PrintBoard();
+    PrintBlockAndFood();
+    PrintSnake();
+    PrintAt(0, AREA + 2, '\n');
+    char input;
+    scanf("%c", &input);
+    switch (input) {
+    case 'w':
+    case 'W':
+      break;
+    case 's':
+    case 'S':
+      break;
+    case 'a':
+    case 'A':
+      break;
+    case 'd':
+    case 'D':
+      break;
+    default:
+      break;
+    }
   }
 
-  endwin(); // Restore normal terminal behavior
+  printf("Game over! Do you want to play again?\n(1) Yes\n(2) Exit\n");
+  Menu();
+}
+
+void Menu() {
+  int input;
+  do {
+    printf("The Snake Game:\nChoose an option:\n(1) Start Game\n(2) "
+           "Instructions\n(3) Exit\n");
+    scanf("%d", &input);
+    switch (input) {
+    case 1:
+      input = 0;
+      printf("Choose Difficulty\n(1) Easy\n(2) Difficult\n");
+      scanf("%d", &input);
+      switch (input) {
+      case 1:
+        difficulty = DIFFICULT;
+        break;
+      case 2:
+        difficulty = EASY;
+        break;
+      }
+      inMenu = false;
+      playing = true;
+      StartGame();
+      break;
+    case 2:
+      // Add instructions here
+      printf("");
+      break;
+    case 3:
+      inMenu = false;
+      break;
+    default:
+      printf("Wrong Input");
+      break;
+    }
+  } while (inMenu);
+}
+
+int main() {
+  Menu();
   return 0;
 }
