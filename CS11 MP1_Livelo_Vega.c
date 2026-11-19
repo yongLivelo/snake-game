@@ -7,6 +7,13 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_GREEN "\x1b[32m"
+#define ANSI_COLOR_YELLOW "\x1b[33m"
+#define ANSI_COLOR_BLUE "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN "\x1b[36m"
+#define ANSI_COLOR_RESET "\x1b[0m"
 // Source - https://stackoverflow.com/a/17271636
 // Posted by David Ranieri
 // Retrieved 2026-11-16, License - CC BY-SA 3.0
@@ -86,41 +93,49 @@ char getch(void) { return getch_(0); }
 /* Read 1 character with echo */
 char getche(void) { return getch_(1); }
 
-void PrintAt(int x, int y, char c) {
+void PrintAt(int x, int y, char c, char *color) {
   // Source - https://stackoverflow.com/a/72073868
   // Posted by AMZG studio's, modified by community. See post 'Timeline' for
   // change history Retrieved 2026-11-16, License - CC BY-SA 4.0
   // Noted in comments that the STDOUT starts at index 1
-  printf("\033[%d;%dH%c", y + 1, (x * 2) + 1, c);
+  printf("%s\033[%d;%dH%c%s", color, y + 1, (x * 2) + 1, c, ANSI_COLOR_RESET);
 }
 
 void PrintBoard() {
   for (int i = 0; i <= AREA; i++) {
-    PrintAt(0, i, '#');
-    PrintAt(AREA, i, '#');
-    PrintAt(i, 0, '#');
-    PrintAt(i, AREA, '#');
+    PrintAt(0, i, '#', ANSI_COLOR_RESET);
+    PrintAt(AREA, i, '#', ANSI_COLOR_RESET);
+    PrintAt(i, 0, '#', ANSI_COLOR_RESET);
+    PrintAt(i, AREA, '#', ANSI_COLOR_RESET);
   }
 
   if (numberOfFoods == 0) {
-    PrintAt(AREA, 7, '$');
+    PrintAt(AREA, 7, '$', ANSI_COLOR_GREEN);
   }
 }
 
 void PrintBlockAndFood() {
   for (int i = 0; i < numberOfFoods; i++) {
-    PrintAt(coordinatesOfFoods[i].x, coordinatesOfFoods[i].y, 'F');
+    PrintAt(coordinatesOfFoods[i].x, coordinatesOfFoods[i].y, 'F',
+            ANSI_COLOR_GREEN);
   }
 
   for (int i = 0; i < numberOfBlocks; i++) {
-    PrintAt(coordinatesOfBlocks[i].x, coordinatesOfBlocks[i].y, 'B');
+    PrintAt(coordinatesOfBlocks[i].x, coordinatesOfBlocks[i].y, 'B',
+            ANSI_COLOR_RED);
   }
 }
 
 void PrintSnake() {
-  PrintAt(head->x, head->y, '@');
+
+  if ((head)->x <= AREA - 1) {
+    PrintAt(head->x, head->y, '@', ANSI_COLOR_BLUE);
+  }
   for (int i = 1; i < snake.length; i++) {
-    PrintAt((&snake.body[i])->x, (&snake.body[i])->y, 'o');
+
+    if ((&snake.body[i])->x > AREA - 1)
+      continue;
+    PrintAt((&snake.body[i])->x, (&snake.body[i])->y, 'o', ANSI_COLOR_BLUE);
   }
 }
 
@@ -200,8 +215,11 @@ void CheckCollisions() {
     return;
   }
 
-  if (snake.body[snake.length].x == AREA && snake.body[snake.length].y == 7 &&
-      numberOfFoods == 0) {
+  if (snake.body[snake.length - 1].x == AREA &&
+      snake.body[snake.length - 1].y == 7 && numberOfFoods == 0) {
+    clear();
+    PrintBoard();
+    PrintSnake();
     playing = false;
     win = true;
   }
@@ -215,6 +233,7 @@ void CheckCollisions() {
       remove_element(coordinatesOfFoods, i, &numberOfFoods);
       if (numberOfFoods == 0) {
         memset(coordinatesOfBlocks, 0, sizeof(coordinatesOfBlocks));
+        numberOfBlocks = 0;
       }
       break;
     }
@@ -247,6 +266,9 @@ void GenerateBlockAndFoodCoordinates() {
       coordinatesOfFoods[i].x = (rand() % (AREA - 1)) + 1;
       coordinatesOfFoods[i].y = (rand() % (AREA - 1)) + 1;
       for (int j = 0; j < i; j++) {
+        if (coordinatesOfBlocks[i].x == 5 && coordinatesOfBlocks[i].y == 5) {
+          duplicateFound = true;
+        }
         if (coordinatesOfFoods[j].x == coordinatesOfFoods[i].x &&
             coordinatesOfFoods[j].y == coordinatesOfFoods[i].y) {
           duplicateFound = true;
@@ -265,9 +287,13 @@ void GenerateBlockAndFoodCoordinates() {
       bool duplicateFound = false;
       if (i >= numberOfBlocks)
         break;
-
       coordinatesOfBlocks[i].x = (rand() % (AREA - 1)) + 1;
       coordinatesOfBlocks[i].y = (rand() % (AREA - 1)) + 1;
+
+      if (coordinatesOfBlocks[i].x == 5 && coordinatesOfBlocks[i].y == 5) {
+        duplicateFound = true;
+      }
+
       if (coordinatesOfBlocks[i].x == 7 &&
           coordinatesOfBlocks[i].y == AREA - 1) {
         duplicateFound = true;
@@ -344,7 +370,7 @@ void StartGame() {
     HandleControls();
     MoveSnake();
     CheckCollisions();
-    PrintAt(0, AREA, '\n');
+    PrintAt(0, AREA, '\n', ANSI_COLOR_BLUE);
   } while (playing);
   printf("\e[?25h");
   PromptEnd();
@@ -352,6 +378,8 @@ void StartGame() {
 
 void PromptNumberOfBlocksAndFood() {
   do {
+    if (difficulty == EASY)
+      break;
     int input;
     printf("How many blocks do you want (5-15)\n");
     if (scanf("%d", &input) != 1) {
@@ -400,6 +428,10 @@ void PromptDifficulty() {
     switch (input) {
     case 1:
       difficulty = EASY;
+      PromptNumberOfBlocksAndFood();
+      playing = true;
+      running = false;
+      StartGame();
       break;
     case 2:
       difficulty = DIFFICULT;
