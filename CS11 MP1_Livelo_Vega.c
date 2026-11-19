@@ -11,8 +11,6 @@
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_YELLOW "\x1b[33m"
 #define ANSI_COLOR_BLUE "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN "\x1b[36m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 // Source - https://stackoverflow.com/a/17271636
 // Posted by David Ranieri
@@ -371,7 +369,7 @@ void StartGame() {
     HandleControls();
     MoveSnake();
     CheckCollisions();
-    PrintAt(0, AREA, '\n', ANSI_COLOR_BLUE);
+    PrintAt(0, AREA, '\n', ANSI_COLOR_RESET);
   } while (playing);
   printf("\e[?25h");
   PromptEnd();
@@ -454,9 +452,9 @@ void Menu() {
   do {
     printf("The Snake Game:\nChoose an option:\n(1) Start Game\n(2) "
            "Instructions\n(3) Exit\n");
+    // Source - https://www.w3schools.com/c/c_input_validation.php
     if (scanf("%d", &input) != 1) {
       printf("Wrong Input\n");
-      // Source - https://www.w3schools.com/c/c_input_validation.php
       while (getchar() != '\n')
         ;
       continue;
