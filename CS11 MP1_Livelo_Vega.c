@@ -338,6 +338,7 @@ void PromptEnd() {
     switch (input) {
     case 1:
       Menu();
+      running = false;
       break;
     case 2:
       running = false;
