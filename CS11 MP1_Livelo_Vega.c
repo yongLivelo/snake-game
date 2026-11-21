@@ -323,26 +323,18 @@ void PromptEnd() {
   } else {
     printf("Game Over. ");
   }
-  int input;
+  char input;
   bool running = true;
   do {
     printf("Do you want to play again?\n(1) Yes\n(2) Exit\n");
-    if (scanf("%d", &input) != 1) {
-      printf("Wrong Input\n");
-      while (getchar() != '\n')
-        ;
-      continue;
-    }
+    input = getch();
     switch (input) {
-    case 1:
+    case '1':
       Menu();
       running = false;
       break;
-    case 2:
+    case '2':
       running = false;
-      break;
-    default:
-      printf("Wrong input");
       break;
     }
   } while (running);
@@ -376,6 +368,7 @@ void StartGame() {
 }
 
 void PromptNumberOfBlocksAndFood() {
+  clear();
   do {
     if (difficulty == EASY)
       break;
@@ -383,10 +376,11 @@ void PromptNumberOfBlocksAndFood() {
     printf("How many blocks do you want (5-15)\n");
     if (scanf("%d", &input) != 1) {
       printf("Wrong Input\n");
+      // Source - https://www.w3schools.com/c/c_input_validation.php
       while (getchar() != '\n')
         ;
-      continue;
     }
+    continue;
     if (input >= 5 && input <= 15) {
       numberOfBlocks = input;
       break;
@@ -414,66 +408,53 @@ void PromptNumberOfBlocksAndFood() {
 }
 
 void PromptDifficulty() {
-  int input;
+  char input;
   bool running = true;
   do {
+    clear();
     printf("Choose Difficulty\n(1) Easy\n(2) Difficult\n");
-    if (scanf("%d", &input) != 1) {
-      printf("Wrong Input\n");
-      while (getchar() != '\n')
-        ;
-      continue;
-    }
+    input = getch();
     switch (input) {
-    case 1:
+    case '1':
       difficulty = EASY;
       PromptNumberOfBlocksAndFood();
       playing = true;
       running = false;
       StartGame();
       break;
-    case 2:
+    case '2':
       difficulty = DIFFICULT;
       PromptNumberOfBlocksAndFood();
       playing = true;
       running = false;
       StartGame();
       break;
-    default:
-      printf("Wrong Input\n");
-      break;
     }
   } while (running);
 }
 
 void Menu() {
-  int input;
+  char input;
   bool running = true;
   do {
+    clear();
     printf("The Snake Game:\nChoose an option:\n(1) Start Game\n(2) "
            "Instructions\n(3) Exit\n");
-    // Source - https://www.w3schools.com/c/c_input_validation.php
-    if (scanf("%d", &input) != 1) {
-      printf("Wrong Input\n");
-      while (getchar() != '\n')
-        ;
-      continue;
-    }
+    input = getch();
     switch (input) {
-    case 1:
+    case '1':
       PromptDifficulty();
       running = false;
       break;
-    case 2:
+    case '2':
+      clear();
       printf(
           "Use WASD to move\nAvoid the walls, the blocks, and your body\nEat "
-          "all the food and a door will open");
+          "all the food and a door will open, click any button to continue");
+      input = getch();
       break;
-    case 3:
+    case '3':
       running = false;
-      break;
-    default:
-      printf("Wrong Input\n");
       break;
     }
   } while (running);
