@@ -318,14 +318,17 @@ void GenerateBlockAndFoodCoordinates() {
 
 void Menu();
 void PromptEnd() {
-  if (win) {
-    printf("You Win! ");
-  } else {
-    printf("Game Over. ");
-  }
   char input;
   bool running = true;
   do {
+    clear();
+    PrintBoard();
+    PrintAt(0, AREA, '\n', ANSI_COLOR_RESET);
+    if (win) {
+      printf("You Win! ");
+    } else {
+      printf("Game Over. ");
+    }
     printf("Do you want to play again?\n(1) Yes\n(2) Exit\n");
     input = getch();
     switch (input) {
@@ -380,7 +383,6 @@ void PromptNumberOfBlocksAndFood() {
       while (getchar() != '\n')
         ;
     }
-    continue;
     if (input >= 5 && input <= 15) {
       numberOfBlocks = input;
       break;
