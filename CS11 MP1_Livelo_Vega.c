@@ -373,7 +373,8 @@ void PromptNumberOfBlocksAndFood() {
       printf("Wrong Input\n");
       // Source - https://www.w3schools.com/c/c_input_validation.php
       while (getchar() != '\n')
-        continue;
+        ;
+      continue;
     }
     if (input >= 5 && input <= 15) {
       numberOfBlocks = input;
@@ -389,7 +390,8 @@ void PromptNumberOfBlocksAndFood() {
     if (scanf("%d", &input) != 1) {
       printf("Wrong Input\n");
       while (getchar() != '\n')
-        continue;
+        ;
+      continue;
     }
     if (input >= 1 && input <= 10) {
       numberOfFoods = input;
