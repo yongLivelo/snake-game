@@ -17,16 +17,11 @@
 // Retrieved 2026-11-16, License - CC BY-SA 3.0
 #define clear() printf("\033[H\033[J")
 #define AREA 15
-#define SNAKE_BODY_MAX_LENGTH (AREA - 1) * (AREA - 1)
-#define FOOD 5
+#define SNAKE_BODY_MAX_LENGTH (AREA - 2) * (AREA - 2)
 #define MAX_NUMBER_OF_FOODS 10
 #define MAX_NUMBER_OF_BLOCKS 15
-bool playing = false;
-bool inMenu = true;
-int numberOfFoods;
-int numberOfBlocks;
-bool invalidInput = false;
-bool win = false;
+bool playing, validInput, win;
+int numberOfFoods, numberOfBlocks, score;
 enum DIRECTION { UP, DOWN, LEFT, RIGHT, STOP };
 enum DIFFICULTY { EASY, DIFFICULT };
 enum DIFFICULTY difficulty;
@@ -34,13 +29,13 @@ struct Point {
   int x;
   int y;
 };
+struct Point coordinatesOfFoods[MAX_NUMBER_OF_FOODS],
+    coordinatesOfBlocks[MAX_NUMBER_OF_BLOCKS];
 struct Snake {
   struct Point body[SNAKE_BODY_MAX_LENGTH];
   int length;
   enum DIRECTION direction;
 };
-struct Point coordinatesOfFoods[MAX_NUMBER_OF_FOODS];
-struct Point coordinatesOfBlocks[MAX_NUMBER_OF_BLOCKS];
 struct Snake snake;
 struct Point *head = &snake.body[0];
 
@@ -60,57 +55,39 @@ void remove_element(struct Point *array, int index, int *array_length) {
 // Retrieved 2026-11-19, License - CC BY-SA 4.0
 static struct termios old, current;
 
-/* Initialize new terminal i/o settings */
-void initTermios(int echo) {
-  tcgetattr(0, &old);         /* grab old terminal i/o settings */
-  current = old;              /* make new settings same as old settings */
-  current.c_lflag &= ~ICANON; /* disable buffered i/o */
-  if (echo) {
-    current.c_lflag |= ECHO; /* set echo mode */
-  } else {
-    current.c_lflag &= ~ECHO; /* set no echo mode */
-  }
-  tcsetattr(0, TCSANOW, &current); /* use these new terminal i/o settings now */
-}
-
-/* Restore old terminal i/o settings */
-void resetTermios(void) { tcsetattr(0, TCSANOW, &old); }
-
-/* Read 1 character - echo defines echo mode */
-char getch_(int echo) {
+char getch() {
   char ch;
-  initTermios(echo);
+  tcgetattr(0, &old);
+  current = old;
+  current.c_lflag &= ~ICANON;
+  current.c_lflag &= ~ECHO;
+  tcsetattr(0, TCSANOW, &current);
   ch = getchar();
-  resetTermios();
+  tcsetattr(0, TCSANOW, &old);
   return ch;
 }
-
-/* Read 1 character without echo */
-char getch(void) { return getch_(0); }
-
-/* Read 1 character with echo */
-char getche(void) { return getch_(1); }
 
 void PrintAt(int x, int y, char c, char *color) {
   // Source - https://stackoverflow.com/a/72073868
   // Posted by AMZG studio's, modified by community. See post 'Timeline' for
   // change history Retrieved 2026-11-16, License - CC BY-SA 4.0
-  // Noted in comments that the STDOUT starts at index 1
   printf("%s\033[%d;%dH%c%s", color, y + 1, (x * 2) + 1, c, ANSI_COLOR_RESET);
 }
 
 void PrintBoard() {
-  for (int i = 0; i <= AREA; i++) {
+  for (int i = 0; i < AREA; i++) {
     PrintAt(0, i, '#', ANSI_COLOR_RESET);
-    PrintAt(AREA, i, '#', ANSI_COLOR_RESET);
+    PrintAt(AREA - 1, i, '#', ANSI_COLOR_RESET);
     PrintAt(i, 0, '#', ANSI_COLOR_RESET);
-    PrintAt(i, AREA, '#', ANSI_COLOR_RESET);
+    PrintAt(i, AREA - 1, '#', ANSI_COLOR_RESET);
   }
 
   if (numberOfFoods == 0) {
-    PrintAt(AREA, 7, '$', ANSI_COLOR_GREEN);
+    PrintAt(AREA - 1, 7, '$', ANSI_COLOR_GREEN);
   }
 }
+
+void PrintScore() { printf("You have a score of %d\n", score); }
 
 void PrintBlockAndFood() {
   for (int i = 0; i < numberOfFoods; i++) {
@@ -125,15 +102,13 @@ void PrintBlockAndFood() {
 }
 
 void PrintSnake() {
-
-  if ((head)->x <= AREA - 1) {
+  if ((head)->x < AREA - 1) {
     PrintAt(head->x, head->y, '@', ANSI_COLOR_BLUE);
   }
   for (int i = 1; i < snake.length; i++) {
-
-    if ((&snake.body[i])->x > AREA - 1)
-      continue;
-    PrintAt((&snake.body[i])->x, (&snake.body[i])->y, 'o', ANSI_COLOR_BLUE);
+    if ((&snake.body[i])->x < AREA - 1) {
+      PrintAt((&snake.body[i])->x, (&snake.body[i])->y, 'o', ANSI_COLOR_BLUE);
+    }
   }
 }
 
@@ -144,47 +119,47 @@ void HandleControls() {
   case 'A':
   case 'a':
     if (snake.direction == RIGHT) {
-      invalidInput = true;
+      validInput = false;
       break;
     }
-    invalidInput = false;
+    validInput = true;
     snake.direction = LEFT;
     break;
   case 'D':
   case 'd':
     if (snake.direction == LEFT) {
-      invalidInput = true;
+      validInput = false;
       break;
     }
-    invalidInput = false;
+    validInput = true;
     snake.direction = RIGHT;
     break;
   case 'W':
   case 'w':
     if (snake.direction == DOWN) {
-      invalidInput = true;
+      validInput = false;
       break;
     }
-    invalidInput = false;
+    validInput = true;
     snake.direction = UP;
     break;
   case 'S':
   case 's':
     if (snake.direction == UP) {
-      invalidInput = true;
+      validInput = false;
       break;
     }
-    invalidInput = false;
+    validInput = true;
     snake.direction = DOWN;
     break;
   default:
-    invalidInput = true;
+    validInput = false;
     break;
   }
 }
 
 void MoveSnake() {
-  if (!invalidInput) {
+  if (validInput) {
     struct Point temp;
     for (int i = snake.length; i > 0; i--) {
       snake.body[i] = snake.body[i - 1];
@@ -209,25 +184,31 @@ void MoveSnake() {
 }
 
 void CheckCollisions() {
-  if (head->y == 7 && head->x == AREA && numberOfFoods == 0) {
+  // Collision disabled at (7, 14) when all food is eaten
+  if (head->y == 7 && head->x == AREA - 1 && numberOfFoods == 0) {
     return;
   }
 
-  if (snake.body[snake.length - 1].x == AREA &&
-      snake.body[snake.length - 1].y == 7 && numberOfFoods == 0) {
-    clear();
-    PrintBoard();
-    PrintSnake();
+  // Collision for tail hitting '$'
+  if (snake.body[snake.length - 1].x == AREA - 1 &&
+      snake.body[snake.length - 1].y == 7 && numberOfFoods == 0 &&
+      head->x != AREA - 1) {
     playing = false;
     win = true;
   }
-  if (head->x == 0 || head->x == AREA || head->y == 0 || head->y == AREA) {
+
+  // Collision for head hitting borders
+  if (head->x == 0 || head->x == AREA - 1 || head->y == 0 ||
+      head->y == AREA - 1) {
     playing = false;
   }
+
+  // Collision for head hitting foods
   for (int i = 0; i < numberOfFoods; i++) {
     if (head->x == coordinatesOfFoods[i].x &&
         head->y == coordinatesOfFoods[i].y) {
       snake.length++;
+      score++;
       remove_element(coordinatesOfFoods, i, &numberOfFoods);
       if (numberOfFoods == 0) {
         memset(coordinatesOfBlocks, 0, sizeof(coordinatesOfBlocks));
@@ -236,14 +217,17 @@ void CheckCollisions() {
       break;
     }
   }
+
+  // Collision for head hitting blocks
   for (int i = 0; i < numberOfBlocks; i++) {
-    if (snake.body[0].x == coordinatesOfBlocks[i].x &&
-        snake.body[0].y == coordinatesOfBlocks[i].y) {
+    if (head->x == coordinatesOfBlocks[i].x &&
+        head->y == coordinatesOfBlocks[i].y) {
       playing = false;
       break;
     }
   }
 
+  // Collision for head hitting body
   for (int i = 1; i < snake.length; i++) {
     if (head->x == snake.body[i].x && head->y == snake.body[i].y) {
       playing = false;
@@ -261,12 +245,12 @@ void GenerateBlockAndFoodCoordinates() {
       bool duplicateFound = false;
       if (i >= numberOfFoods)
         break;
-      coordinatesOfFoods[i].x = (rand() % (AREA - 1)) + 1;
-      coordinatesOfFoods[i].y = (rand() % (AREA - 1)) + 1;
+      coordinatesOfFoods[i].x = (rand() % (AREA - 2)) + 1;
+      coordinatesOfFoods[i].y = (rand() % (AREA - 2)) + 1;
+      if (coordinatesOfFoods[i].x == 1 && coordinatesOfFoods[i].y == 1) {
+        duplicateFound = true;
+      }
       for (int j = 0; j < i; j++) {
-        if (coordinatesOfBlocks[i].x == 5 && coordinatesOfBlocks[i].y == 5) {
-          duplicateFound = true;
-        }
         if (coordinatesOfFoods[j].x == coordinatesOfFoods[i].x &&
             coordinatesOfFoods[j].y == coordinatesOfFoods[i].y) {
           duplicateFound = true;
@@ -285,15 +269,15 @@ void GenerateBlockAndFoodCoordinates() {
       bool duplicateFound = false;
       if (i >= numberOfBlocks)
         break;
-      coordinatesOfBlocks[i].x = (rand() % (AREA - 1)) + 1;
-      coordinatesOfBlocks[i].y = (rand() % (AREA - 1)) + 1;
+      coordinatesOfBlocks[i].x = (rand() % (AREA - 2)) + 1;
+      coordinatesOfBlocks[i].y = (rand() % (AREA - 2)) + 1;
 
-      if (coordinatesOfBlocks[i].x == 5 && coordinatesOfBlocks[i].y == 5) {
+      if (coordinatesOfBlocks[i].x == 1 && coordinatesOfBlocks[i].y == 1) {
         duplicateFound = true;
       }
 
-      if (coordinatesOfBlocks[i].x == 7 &&
-          coordinatesOfBlocks[i].y == AREA - 1) {
+      if (coordinatesOfBlocks[i].x == AREA - 1 &&
+          coordinatesOfBlocks[i].y == 7) {
         duplicateFound = true;
       }
       for (int j = 0; j < i; j++) {
@@ -323,7 +307,8 @@ void PromptEnd() {
   do {
     clear();
     PrintBoard();
-    PrintAt(0, AREA, '\n', ANSI_COLOR_RESET);
+    PrintAt(0, AREA - 1, '\n', ANSI_COLOR_RESET);
+    PrintScore();
     if (win) {
       printf("You Win! ");
     } else {
@@ -349,22 +334,27 @@ void StartGame() {
   // Retrieved 2026-11-19, License - CC BY-SA 3.0
   memset(coordinatesOfBlocks, 0, sizeof(coordinatesOfBlocks));
   memset(coordinatesOfFoods, 0, sizeof(coordinatesOfFoods));
+  score = 0;
+  snake.direction = STOP;
+  playing = true;
   win = false;
   GenerateBlockAndFoodCoordinates();
-  snake.body[0] = (struct Point){5, 5};
+  head->x = 1;
+  head->y = 1;
   snake.length = 1;
+  printf("\e[?25l");
   do {
     // Sourcce -
     // https://stackoverflow.com/questions/30126490/how-to-hide-console-cursor-in-c
-    printf("\e[?25l");
     clear();
     PrintBoard();
     PrintBlockAndFood();
     PrintSnake();
+    PrintAt(0, AREA - 1, '\n', ANSI_COLOR_RESET);
+    PrintScore();
     HandleControls();
     MoveSnake();
     CheckCollisions();
-    PrintAt(0, AREA, '\n', ANSI_COLOR_RESET);
   } while (playing);
   printf("\e[?25h");
   PromptEnd();
@@ -373,15 +363,17 @@ void StartGame() {
 void PromptNumberOfBlocksAndFood() {
   clear();
   do {
-    if (difficulty == EASY)
+    if (difficulty == EASY) {
+      numberOfBlocks = 0;
       break;
+    }
     int input;
     printf("How many blocks do you want (5-15)\n");
     if (scanf("%d", &input) != 1) {
       printf("Wrong Input\n");
       // Source - https://www.w3schools.com/c/c_input_validation.php
       while (getchar() != '\n')
-        ;
+        continue;
     }
     if (input >= 5 && input <= 15) {
       numberOfBlocks = input;
@@ -397,8 +389,7 @@ void PromptNumberOfBlocksAndFood() {
     if (scanf("%d", &input) != 1) {
       printf("Wrong Input\n");
       while (getchar() != '\n')
-        ;
-      continue;
+        continue;
     }
     if (input >= 1 && input <= 10) {
       numberOfFoods = input;
@@ -420,14 +411,12 @@ void PromptDifficulty() {
     case '1':
       difficulty = EASY;
       PromptNumberOfBlocksAndFood();
-      playing = true;
       running = false;
       StartGame();
       break;
     case '2':
       difficulty = DIFFICULT;
       PromptNumberOfBlocksAndFood();
-      playing = true;
       running = false;
       StartGame();
       break;
