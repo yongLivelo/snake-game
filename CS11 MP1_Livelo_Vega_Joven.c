@@ -328,10 +328,7 @@ void PromptEnd() {
   } while (running);
 }
 
-void StartGame() {
-  // Source - https://stackoverflow.com/a/10898450
-  // Posted by user405725
-  // Retrieved 2026-11-19, License - CC BY-SA 3.0
+void Reset() {
   memset(coordinatesOfBlocks, 0, sizeof(coordinatesOfBlocks));
   memset(coordinatesOfFoods, 0, sizeof(coordinatesOfFoods));
   score = 0;
@@ -342,6 +339,12 @@ void StartGame() {
   head->x = 1;
   head->y = 1;
   snake.length = 1;
+}
+void StartGame() {
+  Reset();
+  // Source - https://stackoverflow.com/a/10898450
+  // Posted by user405725
+  // Retrieved 2026-11-19, License - CC BY-SA 3.0
   printf("\e[?25l");
   do {
     // Sourcce -
