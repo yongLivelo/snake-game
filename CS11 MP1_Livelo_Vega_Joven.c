@@ -70,7 +70,7 @@ char getch() {
 void PrintAt(int x, int y, char c, char *color) {
   // Source - https://stackoverflow.com/a/72073868
   // Posted by AMZG studio's, modified by community. See post 'Timeline' for
-  // change history Retrieved 2026-11-16, License - CC BY-SA 4.0
+  // change history Retrieved 2026-11-16, License - CC BY-SA 4.s\033
   printf("%s\033[%d;%dH%c%s", color, y + 1, (x * 2) + 1, c, ANSI_COLOR_RESET);
 }
 
